@@ -1,0 +1,6 @@
+DB_DIALECT=postgresql
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=root
+DB_NAME=online_shop
