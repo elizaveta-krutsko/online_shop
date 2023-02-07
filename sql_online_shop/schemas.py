@@ -1,14 +1,18 @@
 from pydantic import BaseModel
+from typing import Optional
+
 
 class CategoryBase(BaseModel):
     name: str
 
-class CategoryCreate(CategoryBase):
-    pass
 
-class Cetegory(CategoryBase):
+class CategoryCreate(CategoryBase):
+    parent_category_id: Optional[int]
+
+
+class Category(CategoryBase):
     id: int
-    parent_category_id: int
+    parent_category_id: Optional[int]
 
     class Config:
         orm_mode = True

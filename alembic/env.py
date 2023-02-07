@@ -14,7 +14,7 @@ from config import DB_HOST, DB_PASSWORD, DB_DIALECT, DB_NAME, DB_USERNAME, DB_PO
 config = context.config
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_DIALECT", DB_DIALECT)
+config.set_main_option(section, "DB_DIALECT", DB_DIALECT)
 config.set_section_option(section, "DB_USERNAME", DB_USERNAME)
 config.set_section_option(section, "DB_PASSWORD", DB_PASSWORD)
 config.set_section_option(section, "DB_HOST", DB_HOST)
@@ -32,7 +32,10 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+
+from sql_online_shop.models import Category
 target_metadata = Base.metadata
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
