@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from sql_online_shop import crud, schemas
 from dependencies import get_db
 
-
 router = APIRouter(
     prefix="/api/v1/categories",
     tags=["categories"],
@@ -14,10 +13,12 @@ router = APIRouter(
 
 @router.post("/", response_model=schemas.Category)
 def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
-    db_category = crud.get_category_by_name(db, name=category.name)
-    if db_category:
-        raise HTTPException(status_code=400, detail="Name already exists")
-    return crud.create_category(db=db, category=category)
+    try:
+        db_category = crud.get_category_by_name(db, name=category.name)
+    except:
+        HTTPException(status_code=400, detail="Name already exists")
+    finally:
+        return crud.create_category(db=db, category=category)
 
 
 @router.get("/", response_model=list[schemas.Category])
