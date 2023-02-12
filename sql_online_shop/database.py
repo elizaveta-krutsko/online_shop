@@ -3,8 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import config as conf
 
-#SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:root@localhost:5432/online_shop'
-#SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
+
 SQLALCHEMY_DATABASE_URL = f'{conf.DB_DIALECT}://{conf.DB_USERNAME}:{conf.DB_PASSWORD}@{conf.DB_HOST}:{conf.DB_PORT}/{conf.DB_NAME}'
 
 

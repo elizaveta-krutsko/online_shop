@@ -7,8 +7,6 @@ from routers import category
 from dependencies import get_db
 
 
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI(dependencies=[Depends(get_db)])
 
 app.include_router(category.router)

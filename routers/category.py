@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from sql_online_shop import crud, schemas
 from dependencies import get_db
+from sqlalchemy import exc
+
 
 router = APIRouter(
     prefix="/api/v1/categories",
@@ -14,11 +15,11 @@ router = APIRouter(
 @router.post("/", response_model=schemas.Category)
 def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
     try:
-        db_category = crud.get_category_by_name(db, name=category.name)
-    except:
-        HTTPException(status_code=400, detail="Name already exists")
-    finally:
         return crud.create_category(db=db, category=category)
+    except exc.IntegrityError as err:
+        err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
+        raise HTTPException(status_code=400, detail=err_msg)
+
 
 
 @router.get("/", response_model=list[schemas.Category])
