@@ -10,8 +10,6 @@ class Category(Base):
     name = Column(String(90), unique=True)
     parent_category_id = Column(Integer, ForeignKey("categories.id", ondelete='RESTRICT'))
 
-    # self_referential_one_to_many
-    # parent_category = relationship("Category")
 
 
 
