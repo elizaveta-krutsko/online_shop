@@ -1,6 +1,4 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from fastapi.encoders import jsonable_encoder
 from . import models, schemas
 
 

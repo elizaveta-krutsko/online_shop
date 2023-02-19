@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from sql_online_shop import crud, schemas
 from dependencies import get_db
 from sqlalchemy import exc
-from fastapi.responses import JSONResponse
 
 
 router = APIRouter(
@@ -34,12 +33,3 @@ def read_category(category_id: int, db: Session = Depends(get_db)):
     if not (db_category := crud.get_category(db, category_id=category_id)):
         raise HTTPException(status_code=404, detail="Category not found")
     return db_category
-
-@router.delete("/{category_id}", response_model=schemas.Category)
-def delete_category(category_id: int, db: Session = Depends(get_db)):
-    return crud.delete_category(db, category_id=category_id)
-
-
-@router.patch("/{category_id}", response_model=schemas.Category)
-def update_category(category_id: int, db: Session = Depends(get_db)):
-    return crud.update_category(db, category_id=category_id)
