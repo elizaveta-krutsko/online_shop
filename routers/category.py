@@ -44,4 +44,7 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
 
 @router.patch("/{category_id}")
 def update_category(category_id: int, category: schemas.CategoryUpdate, db: Session = Depends(get_db)):
-    return crud.update_category(db, category_id=category_id, category=category)
+    if crud.update_category(db, category_id=category_id, category=category):
+        return f'Row with id = {category_id} was successfully updated'
+    else:
+        raise HTTPException(status_code=404, detail="Category not found")

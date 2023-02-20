@@ -25,12 +25,10 @@ def delete_category(db: Session, category_id: int):
 
 def update_category(db: Session, category_id: int, category: schemas.CategoryUpdate):
     db_category = db.query(models.Category).filter(models.Category.id == category_id)
-    if not db_category.first():
-        raise HTTPException(status_code=404, detail="Category not found")
-    else:
+    if db_category.first():
         if category.name:
             db_category.update({models.Category.name: category.name}, synchronize_session=False)
         if category.parent_category_id:
             db_category.update({models.Category.parent_category_id: category.parent_category_id}, synchronize_session=False)
         db.commit()
-        return {"message": "category was successfully updated"}
+        return db_category
