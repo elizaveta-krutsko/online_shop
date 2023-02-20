@@ -6,7 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from sql_online_shop.database import Base
-from config import DB_HOST, DB_PASSWORD, DB_DIALECT, DB_NAME, DB_USERNAME, DB_PORT
+from config import DB_HOST, DB_PASSWORD, DB_DIALECT, DB_NAME, DB_USERNAME
+from config import DB_PORT
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,7 +23,6 @@ config.set_section_option(section, "DB_PORT", DB_PORT)
 config.set_section_option(section, "DB_NAME", DB_NAME)
 
 
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -33,7 +33,6 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-from sql_online_shop.models import Category
 target_metadata = Base.metadata
 
 

@@ -16,3 +16,11 @@ class Category(CategoryBase):
 
     class Config:
         orm_mode = True
+
+
+class CategoryUpdate(CategoryBase):
+    parent_category_id: Optional[int]
+    name: Optional[str]
+
+    class Config:
+        orm_mode = True
