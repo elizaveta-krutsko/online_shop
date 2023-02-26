@@ -13,6 +13,7 @@ class CategoryCreate(CategoryBase):
 class Category(CategoryBase):
     id: int
     parent_category_id: Optional[int]
+    child_categories: Optional[list] = []
 
     class Config:
         orm_mode = True

@@ -1,13 +1,22 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from fastapi import HTTPException
+
 
 def get_category(db: Session, category_id: int):
     return db.query(models.Category).filter(models.Category.id == category_id).first()
 
 
+def get_category_child_list(db: Session, category_id: int):
+    db_category = db.query(models.Category).filter(models.Category.id == category_id).first()
+    db_category.child_categories = list(db.query(models.Category).with_entities(
+        models.Category.id, models.Category.name).filter(models.Category.parent_category_id == category_id))
+    return db_category
+
+
 def get_categories(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Category).offset(skip).limit(limit).all()
+    db_categories = list(db.query(models.Category).offset(skip).limit(limit).all())
+    return db_categories
+
 
 
 def create_category(db: Session, category: schemas.CategoryCreate):
