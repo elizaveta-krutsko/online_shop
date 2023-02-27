@@ -22,7 +22,6 @@ config.set_section_option(section, "DB_PORT", DB_PORT)
 config.set_section_option(section, "DB_NAME", DB_NAME)
 
 
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -33,7 +32,6 @@ if config.config_file_name is not None:
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 
-from sql_online_shop.models import Category
 target_metadata = Base.metadata
 
 
