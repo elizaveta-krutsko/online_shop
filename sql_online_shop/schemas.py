@@ -25,3 +25,21 @@ class CategoryUpdate(CategoryBase):
 
     class Config:
         orm_mode = True
+
+
+class ItemBase(BaseModel):
+    name: str
+    unit_price: float
+    amount: int
+
+
+class ItemCreate(ItemBase):
+    pass
+
+
+class Item(ItemBase):
+    id: int
+    category_id: int
+
+    class Config:
+        orm_mode = True

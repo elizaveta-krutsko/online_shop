@@ -41,3 +41,23 @@ def update_category(db: Session, category_id: int, category: schemas.CategoryUpd
             db_category.update({models.Category.parent_category_id: category.parent_category_id}, synchronize_session=False)
         db.commit()
         return db_category
+
+
+def create_category_item(db: Session,
+                         item: schemas.ItemCreate,
+                         category_id: int):
+    db_item = models.Item(**item.dict(), item_category_id=category_id)
+    db.add(db_item)
+    db.commit()
+    db.refresh(db_item)
+    return db_item
+
+
+def get_items(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Item).offset(skip).limit(limit).all()
+
+
+def delete_category_item(db: Session, item_id: int):
+    db_item = db.query(models.Item).filter(models.Item.id == item_id).delete()
+    db.commit()
+    return db_item
