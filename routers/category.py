@@ -24,7 +24,7 @@ def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_
 @router.get("/", response_model=list[schemas.Category])
 def get_categories(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     categories = crud.get_categories(db, skip=skip, limit=limit)
-    copied_categories = list([i.__dict__ for i in categories])
+    copied_categories = [i.__dict__ for i in categories]
     return create_tree(copied_categories, None, {"key": "id", "parentKey": "parent_category_id", "children_path": "child_categories"})
 
 

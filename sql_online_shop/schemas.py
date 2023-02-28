@@ -31,15 +31,21 @@ class ItemBase(BaseModel):
     name: str
     unit_price: float
     amount: int
+    item_category_id: int
 
-
-class ItemCreate(ItemBase):
-    pass
+    class Config:
+        orm_mode = True
 
 
 class Item(ItemBase):
     id: int
-    category_id: int
 
     class Config:
         orm_mode = True
+
+
+class ItemUpdate(BaseModel):
+    name: Optional[str]
+    unit_price: Optional[float]
+    amount: Optional[int]
+    item_category_id: Optional[int]

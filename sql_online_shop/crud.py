@@ -18,7 +18,6 @@ def get_categories(db: Session, skip: int = 0, limit: int = 100):
     return db_categories
 
 
-
 def create_category(db: Session, category: schemas.CategoryCreate):
     db_category = models.Category(name=category.name, parent_category_id=category.parent_category_id)
     db.add(db_category)
@@ -43,21 +42,42 @@ def update_category(db: Session, category_id: int, category: schemas.CategoryUpd
         return db_category
 
 
-def create_category_item(db: Session,
-                         item: schemas.ItemCreate,
-                         category_id: int):
-    db_item = models.Item(**item.dict(), item_category_id=category_id)
+# crud for items
+def create_category_item(db: Session, item: schemas.ItemBase):
+    db_item = models.Item(**item.dict())
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
 
 
-def get_items(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Item).offset(skip).limit(limit).all()
-
-
 def delete_category_item(db: Session, item_id: int):
     db_item = db.query(models.Item).filter(models.Item.id == item_id).delete()
     db.commit()
     return db_item
+
+
+def update_item(db: Session, item_id: int, item: schemas.ItemUpdate):
+    db_item = db.query(models.Item).filter(models.Item.id == item_id)
+    if db_item.first():
+        if item.name:
+            db_item.update({models.Item.name: item.name}, synchronize_session=False)
+        if item.unit_price:
+            db_item.update({models.Item.unit_price: item.unit_price}, synchronize_session=False)
+        if item.amount:
+            db_item.update({models.Item.amount: item.amount}, synchronize_session=False)
+        if item.item_category_id:
+            db_item.update({models.Item.item_category_id: item.item_category_id}, synchronize_session=False)
+        db.commit()
+        return db_item
+
+
+def get_item(db: Session, item_id: int):
+    return db.query(models.Item).filter(models.Item.id == item_id).first()
+
+
+def get_items(db: Session, item_category_id: int, skip: int = 0, limit: int = 100):
+    if item_category_id:
+        return db.query(models.Item).filter(models.Item.item_category_id == item_category_id).offset(skip).limit(limit).all()
+    else:
+        return db.query(models.Item).offset(skip).limit(limit).all()
