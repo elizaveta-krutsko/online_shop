@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sql_online_shop import crud, schemas
 from dependencies import get_db
@@ -36,10 +35,14 @@ def delete_category_item(item_id: int, db: Session = Depends(get_db)):
 
 @router.patch("/{item_id}")
 def update_item(item_id: int, item: schemas.ItemUpdate, db: Session = Depends(get_db)):
-    if crud.update_item(db, item_id=item_id, item=item):
-        return f'Row with id = {item_id} was successfully updated'
-    else:
-        raise HTTPException(status_code=404, detail="Item not found")
+    try:
+        if crud.update_item(db, item_id=item_id, item=item):
+            return f'Row with id = {item_id} was successfully updated'
+        else:
+            raise HTTPException(status_code=404, detail="Item not found")
+    except exc.IntegrityError as err:
+        err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
+        raise HTTPException(status_code=400, detail=err_msg)
 
 
 @router.get("/{item_id}", response_model=schemas.Item)
@@ -50,6 +53,13 @@ def get_item(item_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[schemas.Item])
-def get_items(item_category_id: Union[int, None] = None,
+def get_items(item_category_id: Union[list, None] = Query(default=None),
               skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return crud.get_items(db, skip=skip, limit=limit, item_category_id=item_category_id)
+    try:
+        if (db_item := crud.get_items(db, skip=skip, limit=limit, item_category_id=item_category_id)) == []:
+            raise HTTPException(status_code=404, detail="Item category not found")
+        else:
+            return db_item
+    except exc.IntegrityError as err:
+        err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
+        raise HTTPException(status_code=400, detail=err_msg)

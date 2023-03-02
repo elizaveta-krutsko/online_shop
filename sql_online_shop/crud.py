@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from typing import Union
 
 
 def get_category(db: Session, category_id: int):
@@ -58,17 +59,14 @@ def delete_category_item(db: Session, item_id: int):
 
 
 def update_item(db: Session, item_id: int, item: schemas.ItemUpdate):
-    db_item = db.query(models.Item).filter(models.Item.id == item_id)
-    if db_item.first():
-        if item.name:
-            db_item.update({models.Item.name: item.name}, synchronize_session=False)
-        if item.unit_price:
-            db_item.update({models.Item.unit_price: item.unit_price}, synchronize_session=False)
-        if item.amount:
-            db_item.update({models.Item.amount: item.amount}, synchronize_session=False)
-        if item.item_category_id:
-            db_item.update({models.Item.item_category_id: item.item_category_id}, synchronize_session=False)
+    item_dict = item.dict(exclude_unset=True)
+    print(item_dict)
+    db_item_query = db.query(models.Item).filter(models.Item.id == item_id)
+    db_item = db_item_query.first()
+    if db_item:
+        db_item_query.filter(models.Item.id == item_id).update(item_dict,synchronize_session=False)
         db.commit()
+        db.refresh(db_item)
         return db_item
 
 
@@ -76,8 +74,10 @@ def get_item(db: Session, item_id: int):
     return db.query(models.Item).filter(models.Item.id == item_id).first()
 
 
-def get_items(db: Session, item_category_id: int, skip: int = 0, limit: int = 100):
+def get_items(db: Session, item_category_id: Union[list, None], skip: int = 0, limit: int = 100):
     if item_category_id:
-        return db.query(models.Item).filter(models.Item.item_category_id == item_category_id).offset(skip).limit(limit).all()
+        item_category_id_list = item_category_id[0].split(',')
+        return db.query(models.Item).filter(models.Item.item_category_id.in_(item_category_id_list)).offset(skip).limit(
+                limit).all()
     else:
         return db.query(models.Item).offset(skip).limit(limit).all()
