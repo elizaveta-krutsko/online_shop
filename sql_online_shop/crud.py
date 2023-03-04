@@ -60,7 +60,6 @@ def delete_category_item(db: Session, item_id: int):
 
 def update_item(db: Session, item_id: int, item: schemas.ItemUpdate):
     item_dict = item.dict(exclude_unset=True)
-    print(item_dict)
     db_item_query = db.query(models.Item).filter(models.Item.id == item_id)
     db_item = db_item_query.first()
     if db_item:
@@ -81,3 +80,30 @@ def get_items(db: Session, item_category_id: Union[list, None], skip: int = 0, l
                 limit).all()
     else:
         return db.query(models.Item).offset(skip).limit(limit).all()
+
+
+# crud for users
+def create_user(db: Session, user: schemas.ItemBase):
+    db_user = models.User(**user.dict())
+    #add tokens
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(models.User).filter(models.User.id == user_id).delete()
+    db.commit()
+    return db_user
+
+
+def update_user(db: Session, user_id: int, user: schemas.ItemUpdate):
+    user_dict = user.dict(exclude_unset=True)
+    db_user_query = db.query(models.User).filter(models.User.id == user_id)
+    db_user = db_user_query.first()
+    if db_user:
+        db_user_query.filter(models.User.id == user_id).update(user_dict, synchronize_session=False)
+        db.commit()
+        db.refresh(db_user)
+        return db_user
