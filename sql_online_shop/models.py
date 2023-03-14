@@ -25,17 +25,16 @@ class Item(Base):
 
     related_category = relationship("Category", backref="items", passive_deletes=True)
 
-class User(Base, SQLAlchemyBaseUserTable[int]):
+
+class User(Base):
     """User account"""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True)
     email = Column(String(90), unique=True)
-    user_name = Column(String(90), unique=True, nullable=False)
+    username = Column(String(90), unique=True, nullable=False)
     first_name = Column(String(90))
     last_name = Column(String(90))
     registered_at = Column(DateTime(), nullable=False, server_default=func.now())
     hashed_password = Column(String(length=1024), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)

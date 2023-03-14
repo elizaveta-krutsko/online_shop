@@ -1,6 +1,5 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
-from fastapi_users import schemas
 
 
 class CategoryBase(BaseModel):
@@ -52,35 +51,48 @@ class ItemUpdate(BaseModel):
     item_category_id: Optional[int]
 
 
+class TokensResponseSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class TokenPayload(BaseModel):
+    sub: Optional[str] = None
+    exp: int
+
+
 ############### USERS ################
-class UserRead(schemas.BaseUser[int]):
+class UserRead(BaseModel):
     id: int
-    email: EmailStr
-    is_active: bool = True
+    username: str
     is_superuser: bool = False
-    is_verified: bool = False
 
     class Config:
         orm_mode = True
 
 
-class UserCreate(schemas.BaseUserCreate):
-    email: EmailStr
-    user_name: str
+class UserInfo(UserRead):
+    email: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+
+
+class UserCreate(BaseModel):
+    email: str
+    username: str
     first_name: Optional[str]
     last_name: Optional[str]
     password: str
-    is_active: bool = True
-    is_superuser: bool = False
-    is_verified: bool = False
+    is_superuser: Optional[bool] = False
+
+    class Config:
+        orm_mode = True
 
 
-class UserUpdate(schemas.BaseUserUpdate):
-    user_name: Optional[str]
+class UserUpdate(BaseModel):
+    username: Optional[str]
     first_name: Optional[str]
     last_name: Optional[str]
     password: Optional[str]
-    email: Optional[EmailStr]
-    is_active: Optional[bool]
+    email: Optional[str]
     is_superuser: Optional[bool]
-    is_verified: Optional[bool]

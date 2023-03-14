@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from typing import Union
+from typing import Union, Any
+import utils
 
 
 def get_category(db: Session, category_id: int):
@@ -82,14 +83,24 @@ def get_items(db: Session, item_category_id: Union[list, None], skip: int = 0, l
         return db.query(models.Item).offset(skip).limit(limit).all()
 
 
-# crud for users
-def create_user(db: Session, user: schemas.ItemBase):
-    db_user = models.User(**user.dict())
-    #add tokens
+# USERS
+def create_user(db: Session, user: schemas.UserCreate):
+    hashed_password = utils.get_password_hash(user.password)
+    user_data = user.dict()
+    del user_data["password"]
+    user_data["hashed_password"] = hashed_password
+    db_user = models.User(**user_data)
     db.add(db_user)
     db.commit()
-    db.refresh(db_user)
     return db_user
+
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
+
+
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 
 def delete_user(db: Session, user_id: int):
@@ -98,7 +109,8 @@ def delete_user(db: Session, user_id: int):
     return db_user
 
 
-def update_user(db: Session, user_id: int, user: schemas.ItemUpdate):
+def update_user(db: Session, user_id: int, user: schemas.UserUpdate):
+    print(type(user))
     user_dict = user.dict(exclude_unset=True)
     db_user_query = db.query(models.User).filter(models.User.id == user_id)
     db_user = db_user_query.first()
@@ -107,3 +119,16 @@ def update_user(db: Session, user_id: int, user: schemas.ItemUpdate):
         db.commit()
         db.refresh(db_user)
         return db_user
+
+
+def get_user(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    db_users = db.query(models.User).offset(skip).limit(limit).all()
+    return db_users
+
+
+def get_info_about_me(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
