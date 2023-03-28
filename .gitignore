@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+services/
+online_shop_volume/
 
 # C extensions
 *.so

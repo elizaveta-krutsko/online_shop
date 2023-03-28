@@ -9,6 +9,7 @@ from sql_online_shop.schemas import UserRead, TokenPayload
 from sql_online_shop import crud
 import security
 import config
+import redis
 
 
 def get_db():
@@ -17,6 +18,19 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def create_redis():
+    return redis.ConnectionPool(
+        host='localhost',
+        port=6379,
+        db=0,
+        decode_responses=True
+    )
+
+
+def get_redis():
+    return redis.Redis(connection_pool=create_redis(), decode_responses=True)
 
 
 reusable_oauth = OAuth2PasswordBearer(

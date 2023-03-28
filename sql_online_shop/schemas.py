@@ -37,6 +37,20 @@ class ItemBase(BaseModel):
         orm_mode = True
 
 
+class CartItemResponse(BaseModel):
+    id: int
+    name: str
+    unit_price: float
+    amount: int
+    ordered_quantity: int
+    item_category_id: int
+
+
+class CartItemCreate(BaseModel):
+    id: int
+    ordered_quantity: Optional[int] = 1
+
+
 class Item(ItemBase):
     id: int
 
