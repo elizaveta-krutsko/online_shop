@@ -113,6 +113,10 @@ class UserUpdate(BaseModel):
     is_superuser: Optional[bool]
 
 
+class OrderIsBeenPaid(BaseModel):
+    is_been_paid: Optional[bool] = False
+
+
 class ItemInOrderInfo(BaseModel):
     id: int
     name: str
@@ -122,9 +126,9 @@ class ItemInOrderInfo(BaseModel):
 
 
 class OrderItem(BaseModel):
+    my_item: Optional[ItemInOrderInfo]
     ordered_quantity: int
     total_item_cost: float
-    item: Optional[ItemInOrderInfo]
 
     class Config:
         orm_mode = True
@@ -137,7 +141,17 @@ class Order(BaseModel):
     is_been_paid: bool = False
     expired_at: datetime
     total_order_cost: Optional[float]
-    order_items: list[OrderItem]
+    all_items: list[OrderItem]
+
+    def dict(self, **kwargs):
+        data = super(Order, self).dict(**kwargs)
+
+        for a in data['all_items']:
+            a['id'] = a['my_item']['id']
+            a['name'] = a['my_item']['name']
+            del a['my_item']
+
+        return data
 
     class Config:
         orm_mode = True

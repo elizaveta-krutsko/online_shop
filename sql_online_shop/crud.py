@@ -3,6 +3,7 @@ from . import models, schemas
 from typing import Union
 import utils
 from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 
 
 def get_category(db: Session, category_id: int):
@@ -135,25 +136,28 @@ def get_info_about_me(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
 
-def create_order(db: Session, is_been_paid, username: str, cart_items: list):
+def create_order(db: Session, is_been_paid_flag: schemas.OrderIsBeenPaid, username: str, cart_items: list):
     # ищем id юзера
     id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
 
-    # считаем стоимость каждого товара в корзине - setdefault
+    # считаем стоимость каждого товара в корзине
     for item in cart_items:
-        item.setdefault('total_item_cost', float(item['unit_price']) * int(item['ordered_quantity']))
+        item['total_item_cost'] = float(item['unit_price']) * int(item['ordered_quantity'])
 
-    # считаем итоговую стоимость
+    # считаем итоговую стоимость заказа
     total_order_cost = 0
     for item in cart_items:
         total_order_cost += item['total_item_cost']
+
+    # берем флаг оплаты заказа с Body запроса
+    is_been_paid_dict = is_been_paid_flag.dict(exclude_unset=True)
 
     #создаем заказ
     db_order = models.Order(
         user_id=id_user,
         expired_at=(datetime.utcnow() + timedelta(minutes=30)),
         total_order_cost=total_order_cost,
-        is_been_paid=is_been_paid
+        is_been_paid=is_been_paid_dict['is_been_paid']
     )
     db.add(db_order)
     db.flush()
@@ -170,4 +174,31 @@ def create_order(db: Session, is_been_paid, username: str, cart_items: list):
 
     db.commit()
 
+
+def remove_ordered_quantity(db: Session, order):
+    pass
+
+
+def get_order_info(db: Session, order_id: int):
+    db_order = db.query(models.Order).options(
+        joinedload(models.Order.all_items).options(
+            joinedload(models.OrderItem.my_item)
+        )
+    ).where(models.Order.id == order_id).one()
+    return db_order
+
+
+def get_all_user_orders(db: Session, username: str):
+    id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
+    db_orders = db.query(models.Order).options(
+        joinedload(models.Order.all_items).options(
+            joinedload(models.OrderItem.my_item)
+        )
+    ).where(models.Order.user_id == id_user).all()
+    return db_orders
+
+
+def delete_order(db: Session, order_id: int):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).delete()
+    db.commit()
     return db_order

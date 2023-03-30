@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from typing import List
+
+from fastapi import APIRouter, Body
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from sql_online_shop import crud, schemas
@@ -11,12 +13,12 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=schemas.Order)
+@router.post("/")
 def create_order(
+        is_been_paid_flag: schemas.OrderIsBeenPaid,
         db: Session = Depends(get_db),
         current_user: schemas.UserRead = Depends(get_current_user),
-        redis=Depends(get_redis),
-        is_been_paid: bool = Body(...)
+        redis=Depends(get_redis)
         ):
 
     # берем юзера с токена
@@ -35,11 +37,38 @@ def create_order(
 
 # создаем заказ
     try:
-        return crud.create_order(db, is_been_paid, username, cart_items)
-
-        # чистим корзину этого юзера
-        redis.delete(username)
-
+        db_order = crud.create_order(db=db, is_been_paid_flag=is_been_paid_flag, username=username, cart_items=cart_items)
     except exc.IntegrityError as err:
         err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
         raise HTTPException(status_code=400, detail=err_msg)
+
+    # чистим корзину этого юзера
+    redis.delete(username)
+
+    #отнимаем заказанное кол-во из бд
+    #crud.remove_ordered_quantity(db=db, order=db_order)
+
+    return f'The order has been placed'
+
+
+@router.get("/{order_id}", response_model=schemas.Order)
+def get_order(order_id: int, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    if not (db_order := crud.get_order_info(db=db, order_id=order_id)):
+        raise HTTPException(status_code=404, detail="Order not found")
+    return db_order
+
+
+@router.get("/", response_model=List[schemas.Order])
+def get_user_orders(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    username = current_user.__dict__["username"]
+    if not (db_orders := crud.get_all_user_orders(db=db, username=username)):
+        raise HTTPException(status_code=404, detail="Orders not found")
+    return db_orders
+
+
+@router.delete("/{order_id}")
+def delete_order(order_id: int, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    if crud.delete_order(db, order_id=order_id):
+        return f'Order with id = {order_id} was successfully deleted'
+    else:
+        raise HTTPException(status_code=404, detail="Order not found")
