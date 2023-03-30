@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from typing import Union, Any
+from typing import Union
 import utils
+from datetime import datetime, timedelta
 
 
 def get_category(db: Session, category_id: int):
@@ -132,3 +133,41 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 
 def get_info_about_me(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
+
+
+def create_order(db: Session, is_been_paid, username: str, cart_items: list):
+    # ищем id юзера
+    id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
+
+    # считаем стоимость каждого товара в корзине - setdefault
+    for item in cart_items:
+        item.setdefault('total_item_cost', float(item['unit_price']) * int(item['ordered_quantity']))
+
+    # считаем итоговую стоимость
+    total_order_cost = 0
+    for item in cart_items:
+        total_order_cost += item['total_item_cost']
+
+    #создаем заказ
+    db_order = models.Order(
+        user_id=id_user,
+        expired_at=(datetime.utcnow() + timedelta(minutes=30)),
+        total_order_cost=total_order_cost,
+        is_been_paid=is_been_paid
+    )
+    db.add(db_order)
+    db.flush()
+
+    # создаем связи
+    for item in cart_items:
+        db_item_order = models.OrderItem(
+            order_id=db_order.id,
+            item_id=item['id'],
+            ordered_quantity=item['ordered_quantity'],
+            total_item_cost=item['total_item_cost']
+        )
+        db.add(db_item_order)
+
+    db.commit()
+
+    return db_order

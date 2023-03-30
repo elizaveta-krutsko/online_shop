@@ -15,7 +15,7 @@ router = APIRouter(
 @router.post("/", response_model=schemas.Item)
 def create_category_item(item: schemas.ItemBase, db: Session = Depends(get_db), admin_user: schemas.UserRead = Depends(is_superuser)):
     try:
-        return crud.create_category_item(db=db, item=item)
+            return crud.create_category_item(db=db, item=item)
     except exc.IntegrityError as err:
         err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
         raise HTTPException(status_code=400, detail=err_msg)

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class CategoryBase(BaseModel):
@@ -110,3 +111,33 @@ class UserUpdate(BaseModel):
     password: Optional[str]
     email: Optional[str]
     is_superuser: Optional[bool]
+
+
+class ItemInOrderInfo(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
+
+
+class OrderItem(BaseModel):
+    ordered_quantity: int
+    total_item_cost: float
+    item: Optional[ItemInOrderInfo]
+
+    class Config:
+        orm_mode = True
+
+
+class Order(BaseModel):
+    id: int
+    user_id: int
+    created_at: datetime
+    is_been_paid: bool = False
+    expired_at: datetime
+    total_order_cost: Optional[float]
+    order_items: list[OrderItem]
+
+    class Config:
+        orm_mode = True
