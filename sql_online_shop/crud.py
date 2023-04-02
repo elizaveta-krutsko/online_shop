@@ -132,13 +132,16 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db_users
 
 
-def get_info_about_me(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
-
-
+#ORDERS
 def create_order(db: Session, is_been_paid_flag: schemas.OrderIsBeenPaid, username: str, cart_items: list):
     # ищем id юзера
     id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
+
+    # проверяем наличие указанного кол-ва товара для заказа на складе
+    for item in cart_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item['id']).first()
+        if int(item['ordered_quantity']) > db_item.amount:
+            item['ordered_quantity'] = str(db_item.amount)
 
     # считаем стоимость каждого товара в корзине
     for item in cart_items:
@@ -173,10 +176,7 @@ def create_order(db: Session, is_been_paid_flag: schemas.OrderIsBeenPaid, userna
         db.add(db_item_order)
 
     db.commit()
-
-
-def remove_ordered_quantity(db: Session, order):
-    pass
+    return db_order.id
 
 
 def get_order_info(db: Session, order_id: int):
@@ -202,3 +202,28 @@ def delete_order(db: Session, order_id: int):
     db_order = db.query(models.Order).filter(models.Order.id == order_id).delete()
     db.commit()
     return db_order
+
+
+def remove_ordered_quantity(db: Session, order_id: int):
+    db_order_items = db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).all()
+    for item in db_order_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item.item_id).first()
+        db_item.amount -= item.ordered_quantity
+        db.commit()
+
+
+def add_ordered_quantity(db: Session, order_id: int):
+    db_order_items = db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).all()
+    for item in db_order_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item.item_id).first()
+        db_item.amount += item.ordered_quantity
+        db.commit()
+
+
+def remove_expired_orders(db: Session):
+    db_expired_orders = db.query(models.Order).filter(models.Order.expired_at < datetime.utcnow()).all()
+    if db_expired_orders:
+        for order in db_expired_orders:
+            db.query(models.Order).filter(models.Order.id == order.order_id).delete()
+    db.commit()
+    #return f'function completed'

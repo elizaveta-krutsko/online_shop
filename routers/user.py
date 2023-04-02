@@ -110,18 +110,6 @@ def get_small_info_about_any_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 
-@router.get("/me/{user_id}", response_model=schemas.UserInfo)
-def get_info_about_me(user_id: int, current_user: schemas.UserRead = Depends(get_current_user), db: Session = Depends(get_db)):
-    username = current_user.username
-    if user_id == current_user.id:
-        return crud.get_info_about_me(db, username=username)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No permissions",
-        )
-
-
 @router.patch("/{user_id}")
 def update_item(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db),  current_user: schemas.UserRead = Depends(get_current_user)):
     try:

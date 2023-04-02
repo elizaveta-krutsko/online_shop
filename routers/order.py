@@ -1,6 +1,5 @@
 from typing import List
-
-from fastapi import APIRouter, Body
+from fastapi import APIRouter
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 from sql_online_shop import crud, schemas
@@ -37,7 +36,7 @@ def create_order(
 
 # создаем заказ
     try:
-        db_order = crud.create_order(db=db, is_been_paid_flag=is_been_paid_flag, username=username, cart_items=cart_items)
+        db_order_id = crud.create_order(db=db, is_been_paid_flag=is_been_paid_flag, username=username, cart_items=cart_items)
     except exc.IntegrityError as err:
         err_msg = str(err.orig).split(':')[-1].replace('\n', '').strip()
         raise HTTPException(status_code=400, detail=err_msg)
@@ -45,8 +44,9 @@ def create_order(
     # чистим корзину этого юзера
     redis.delete(username)
 
-    #отнимаем заказанное кол-во из бд
-    #crud.remove_ordered_quantity(db=db, order=db_order)
+    #отнимаем заказанное кол-во из бд при первом post (без оплаты), чтобы не было дубрирования
+    if is_been_paid_flag.is_been_paid == False:
+        crud.remove_ordered_quantity(db=db, order_id=db_order_id)
 
     return f'The order has been placed'
 
