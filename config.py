@@ -1,8 +1,8 @@
 import os
 from dotenv import load_dotenv
-from pathlib import Path
+from os.path import join, dirname
 
-dotenv_path = Path('/home/oem/PycharmProjects/online_shop/envs/.env')
+dotenv_path = join(dirname(__file__), 'envs/.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 DB_DIALECT: str = os.getenv('DB_DIALECT')

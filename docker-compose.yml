@@ -23,6 +23,7 @@ services:
     restart: always
     depends_on:
       - postgres
+      - redis
 
   redis:
     image: redis:latest
@@ -30,6 +31,22 @@ services:
       - 6379:6379
     env_file:
       - envs/.env
+
+  celery-beat:
+    container_name: celery_beat
+    env_file:
+      - ./envs/.env
+    build: .
+    command: celery -A celery_worker.celery beat --loglevel=INFO
+    volumes:
+      - ./online_shop_volume:/var/lib/celery/data
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - postgres
+      - redis
 
   celery_worker:
     container_name: celery_worker
@@ -59,4 +76,4 @@ services:
     depends_on:
       - app
       - redis
-      - celery_worker
+      - celery-beat

@@ -222,8 +222,7 @@ def add_ordered_quantity(db: Session, order_id: int):
 
 def remove_expired_orders(db: Session):
     db_expired_orders = db.query(models.Order).filter(models.Order.expired_at < datetime.utcnow()).all()
-    if db_expired_orders:
-        for order in db_expired_orders:
-            db.query(models.Order).filter(models.Order.id == order.order_id).delete()
+    for order in db_expired_orders:
+        db.query(models.Order).filter(models.Order.id == order.id).delete()
     db.commit()
-    #return f'function completed'
+    return f'function completed'
