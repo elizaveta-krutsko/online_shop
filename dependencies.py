@@ -66,11 +66,11 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(reusabl
             detail="Could not find user",
         )
 
-    return db_user
+    return UserRead.from_orm(db_user)
 
 
 def is_superuser(user: UserRead = Depends(get_current_user)):
-    if user.__dict__['is_superuser']:
+    if user.is_superuser:
         return user
     else:
         raise HTTPException(

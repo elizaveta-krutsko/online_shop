@@ -21,7 +21,7 @@ def create_order(
         ):
 
     # берем юзера с токена
-    username = current_user.__dict__["username"]
+    username = current_user.username
 
 # по username вытаскиваем товары из корзины
     cart_items = []
@@ -60,7 +60,7 @@ def get_order(order_id: int, db: Session = Depends(get_db), current_user: schema
 
 @router.get("/", response_model=List[schemas.Order])
 def get_user_orders(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    username = current_user.__dict__["username"]
+    username = current_user.username
     if not (db_orders := crud.get_all_user_orders(db=db, username=username)):
         raise HTTPException(status_code=404, detail="Orders not found")
     return db_orders

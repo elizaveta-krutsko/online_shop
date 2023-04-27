@@ -135,7 +135,7 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 #ORDERS
 def create_order(db: Session, is_been_paid_flag: schemas.OrderIsBeenPaid, username: str, cart_items: list):
     # ищем id юзера
-    id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
+    id_user = db.query(models.User).filter(models.User.username == username).first().id
 
     # проверяем наличие указанного кол-ва товара для заказа на складе
     for item in cart_items:
@@ -189,7 +189,7 @@ def get_order_info(db: Session, order_id: int):
 
 
 def get_all_user_orders(db: Session, username: str):
-    id_user = db.query(models.User).filter(models.User.username == username).first().__dict__['id']
+    id_user = db.query(models.User).filter(models.User.username == username).first().id
     db_orders = db.query(models.Order).options(
         joinedload(models.Order.all_items).options(
             joinedload(models.OrderItem.my_item)

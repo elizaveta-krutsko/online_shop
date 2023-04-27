@@ -39,16 +39,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password"
         )
 
-    user_data = user.__dict__
-    if not utils.verify_password(form_data.password, user_data['hashed_password']):
+    if not utils.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password"
         )
 
     return {
-        "access_token": security.create_access_token(user_data['username']),
-        "refresh_token": security.create_refresh_token(user_data['username']),
+        "access_token": security.create_access_token(user.username),
+        "refresh_token": security.create_refresh_token(user.username),
     }
 
 
@@ -79,11 +78,11 @@ def refresh_token(db: Session = Depends(get_db), token: str = Body(...)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find user",
         )
-    user_data = db_user.__dict__
     return {
-        "access_token": security.create_access_token(user_data['username']),
-        "refresh_token": token
+        "access_token": security.create_access_token(db_user.username),
+        "refresh_token": security.create_refresh_token(db_user.username),
     }
+
 
 
 @router.delete("/{user_id}")
