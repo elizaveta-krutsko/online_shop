@@ -39,16 +39,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             detail="Incorrect username or password"
         )
 
-    user_data = user.__dict__
-    if not utils.verify_password(form_data.password, user_data['hashed_password']):
+    if not utils.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password"
         )
 
     return {
-        "access_token": security.create_access_token(user_data['username']),
-        "refresh_token": security.create_refresh_token(user_data['username']),
+        "access_token": security.create_access_token(user.username),
+        "refresh_token": security.create_refresh_token(user.username),
     }
 
 
@@ -79,11 +78,11 @@ def refresh_token(db: Session = Depends(get_db), token: str = Body(...)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Could not find user",
         )
-    user_data = db_user.__dict__
     return {
-        "access_token": security.create_access_token(user_data['username']),
-        "refresh_token": token
+        "access_token": security.create_access_token(db_user.username),
+        "refresh_token": security.create_refresh_token(db_user.username),
     }
+
 
 
 @router.delete("/{user_id}")
@@ -108,18 +107,6 @@ def get_small_info_about_any_user(user_id: int, db: Session = Depends(get_db)):
     if not (db_user := crud.get_user(db, user_id=user_id)):
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
-
-
-@router.get("/me/{user_id}", response_model=schemas.UserInfo)
-def get_info_about_me(user_id: int, current_user: schemas.UserRead = Depends(get_current_user), db: Session = Depends(get_db)):
-    username = current_user.username
-    if user_id == current_user.id:
-        return crud.get_info_about_me(db, username=username)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No permissions",
-        )
 
 
 @router.patch("/{user_id}")

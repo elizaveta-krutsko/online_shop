@@ -15,7 +15,7 @@ def get_cart(current_user: schemas.UserRead = Depends(get_current_user),
              db: Session = Depends(get_db),
              redis=Depends(get_redis)
              ):
-    username = current_user.__dict__["username"]
+    username = current_user.username
     cart_items = []
     redis_cart_items = redis.hgetall(username)
     for item_id in redis_cart_items.keys():
@@ -41,7 +41,7 @@ def add_to_cart(
     if item.ordered_quantity > db_item_dict["amount"]:
         raise HTTPException(status_code=404, detail=f'Max amount exceeded. Available amount: {db_item_dict["amount"]}')
 
-    username = current_user.__dict__["username"]
+    username = current_user.username
     redis.hset(username, item.id, item.ordered_quantity)
     redis.expire(username, 3 * 24 * 3600)
     db_item_dict["ordered_quantity"] = item.ordered_quantity
@@ -61,7 +61,7 @@ def remove_from_cart(
         raise HTTPException(status_code=404, detail="Item not found")
 
     db_item_dict = db_item.__dict__
-    username = current_user.__dict__["username"]
+    username = current_user.username
     redis.hdel(username, item.id)
     return f'{db_item_dict["name"]} was removed from cart.'
 
@@ -72,6 +72,6 @@ def clear_cart(
         redis=Depends(get_redis)
         ):
 
-    username = current_user.__dict__["username"]
+    username = current_user.username
     redis.delete(username)
     return f'Cart was cleared.'

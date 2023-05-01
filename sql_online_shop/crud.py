@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
-from typing import Union, Any
+from typing import Union
 import utils
+from datetime import datetime, timedelta
+from sqlalchemy.orm import joinedload
 
 
 def get_category(db: Session, category_id: int):
@@ -130,5 +132,97 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db_users
 
 
-def get_info_about_me(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
+#ORDERS
+def create_order(db: Session, is_been_paid_flag: schemas.OrderIsBeenPaid, username: str, cart_items: list):
+    # ищем id юзера
+    id_user = db.query(models.User).filter(models.User.username == username).first().id
+
+    # проверяем наличие указанного кол-ва товара для заказа на складе
+    for item in cart_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item['id']).first()
+        if int(item['ordered_quantity']) > db_item.amount:
+            item['ordered_quantity'] = str(db_item.amount)
+
+    # считаем стоимость каждого товара в корзине
+    for item in cart_items:
+        item['total_item_cost'] = float(item['unit_price']) * int(item['ordered_quantity'])
+
+    # считаем итоговую стоимость заказа
+    total_order_cost = 0
+    for item in cart_items:
+        total_order_cost += item['total_item_cost']
+
+    # берем флаг оплаты заказа с Body запроса
+    is_been_paid_dict = is_been_paid_flag.dict(exclude_unset=True)
+
+    #создаем заказ
+    db_order = models.Order(
+        user_id=id_user,
+        expired_at=(datetime.utcnow() + timedelta(minutes=30)),
+        total_order_cost=total_order_cost,
+        is_been_paid=is_been_paid_dict['is_been_paid']
+    )
+    db.add(db_order)
+    db.flush()
+
+    # создаем связи
+    for item in cart_items:
+        db_item_order = models.OrderItem(
+            order_id=db_order.id,
+            item_id=item['id'],
+            ordered_quantity=item['ordered_quantity'],
+            total_item_cost=item['total_item_cost']
+        )
+        db.add(db_item_order)
+
+    db.commit()
+    return db_order.id
+
+
+def get_order_info(db: Session, order_id: int):
+    db_order = db.query(models.Order).options(
+        joinedload(models.Order.all_items).options(
+            joinedload(models.OrderItem.my_item)
+        )
+    ).where(models.Order.id == order_id).one()
+    return db_order
+
+
+def get_all_user_orders(db: Session, username: str):
+    id_user = db.query(models.User).filter(models.User.username == username).first().id
+    db_orders = db.query(models.Order).options(
+        joinedload(models.Order.all_items).options(
+            joinedload(models.OrderItem.my_item)
+        )
+    ).where(models.Order.user_id == id_user).all()
+    return db_orders
+
+
+def delete_order(db: Session, order_id: int):
+    db_order = db.query(models.Order).filter(models.Order.id == order_id).delete()
+    db.commit()
+    return db_order
+
+
+def remove_ordered_quantity(db: Session, order_id: int):
+    db_order_items = db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).all()
+    for item in db_order_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item.item_id).first()
+        db_item.amount -= item.ordered_quantity
+        db.commit()
+
+
+def add_ordered_quantity(db: Session, order_id: int):
+    db_order_items = db.query(models.OrderItem).filter(models.OrderItem.order_id == order_id).all()
+    for item in db_order_items:
+        db_item = db.query(models.Item).filter(models.Item.id == item.item_id).first()
+        db_item.amount += item.ordered_quantity
+        db.commit()
+
+
+def remove_expired_orders(db: Session):
+    db_expired_orders = db.query(models.Order).filter(models.Order.expired_at < datetime.utcnow()).all()
+    for order in db_expired_orders:
+        db.query(models.Order).filter(models.Order.id == order.id).delete()
+    db.commit()
+    return f'function completed'

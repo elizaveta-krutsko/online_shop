@@ -11,9 +11,69 @@ services:
       - 5432:5432
     env_file:
       - envs/.env
+
+  app:
+    container_name: app
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./online_shop_volume:/var/lib/celery/data
+    ports:
+      - 8004:8000
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+
   redis:
     image: redis:latest
     ports:
       - 6379:6379
     env_file:
       - envs/.env
+
+  celery-beat:
+    container_name: celery_beat
+    env_file:
+      - ./envs/.env
+    build: .
+    command: celery -A celery_worker.celery beat --loglevel=INFO
+    volumes:
+      - ./online_shop_volume:/var/lib/celery/data
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - postgres
+      - redis
+
+  celery_worker:
+    container_name: celery_worker
+    env_file:
+      - ./envs/.env
+    build: .
+    command: celery -A celery_worker.celery worker --loglevel=INFO
+    volumes:
+      - ./online_shop_volume:/var/lib/celery/data
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - postgres
+      - redis
+
+  flower:
+    container_name: flower
+    build: .
+    command: celery -A celery_worker.celery flower --port=5555
+    ports:
+      - 5556:5555
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - app
+      - redis
+      - celery-beat
